@@ -1,0 +1,33 @@
+name: CI + Sonar
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1) Python: 安装 + 测试 + 生成 coverage.xml（必须在 scan 之前）
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps
+        working-directory: py-app
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Pytest with coverage (write coverage.xml to repo root)
+        run: |
+          pytest py-app --cov=py-app --cov-report=xml:coverage.xml
+
+      # 2) Sonar scan（最后执行，这样能读到 coverage.xml）
+      - name: Sonar scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
