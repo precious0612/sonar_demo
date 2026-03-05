@@ -4,11 +4,10 @@ import math  # 1) 未使用 import（常见 Code Smell）
 import json  # 2) 未使用 import（常见 Code Smell）
 
 def will_always_return(x: int) -> int:
-    unused = 123  # 3) 未使用变量（典型 Code Smell：Unused local variables should be removed）
     if x > 0:
         return 1
     else:
-        return 1  # 4) 两个分支完全相同（冗余分支，典型 Code Smell）
+        return -1
 
 def bad_exception_handling() -> None:
     try:
