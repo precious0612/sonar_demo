@@ -1,51 +1,34 @@
-import os
-import random
+# py-app/app.py
 
-PASSWORD = "SuperSecretPassword123!"  # 故意：硬编码凭证（常见会触发 hard-coded credentials 类规则） [oai_citation:1‡Sonar Community](https://community.sonarsource.com/t/secret-detection-rule-s2068-hard-coded-credentials-are-security-sensitive/119145?utm_source=chatgpt.com)
+import math  # 1) 未使用 import（常见 Code Smell）
+import json  # 2) 未使用 import（常见 Code Smell）
 
-def parse_and_exec(user_text: str) -> int:
-    # 故意：使用 eval（危险函数；很多规则集会把它当成安全热点/漏洞）
-    value = eval(user_text)  # noqa: S3076 (如果你的 profile 开了相关规则，通常会报)  [oai_citation:2‡Sonar Community](https://community.sonarsource.com/t/sonar-way-default-profile-not-detecting-python-vulnerabilities/89529?utm_source=chatgpt.com)
-    return int(value)
+def will_always_return(x: int) -> int:
+    unused = 123  # 3) 未使用变量（典型 Code Smell：Unused local variables should be removed）
+    if x > 0:
+        return 1
+    else:
+        return 1  # 4) 两个分支完全相同（冗余分支，典型 Code Smell）
 
-def bad_logic(x: int) -> int:
-    # 故意：复杂控制流 + 冗余分支，提高认知复杂度（常见 code smell） [oai_citation:3‡GitHub](https://github.com/SonarSource/sonar-python/blob/master/python-checks/src/main/resources/org/sonar/l10n/py/rules/python/S3776.html?utm_source=chatgpt.com)
-    total = 0
-    for i in range(50):
-        if i % 2 == 0:
-            if x > 0:
-                total += i
-            else:
-                total -= i
-        else:
-            if x > 10:
-                total += i * 2
-            elif x > 5:
-                total += i
-            elif x > 0:
-                total -= i
-            else:
-                total += 1
-    return total
-
-def insecure_token() -> str:
-    # 故意：用 random 生成“看起来像 token”的值（弱随机，安全上不推荐）
-    return "".join(str(random.randint(0, 9)) for _ in range(16))
-
-def run_command(user_arg: str) -> str:
-    # 故意：把用户输入拼到 shell 命令（常见命令注入风险点；看你规则集是否启用会报） [oai_citation:4‡Sonar Community](https://community.sonarsource.com/t/more-accurate-command-injection-rule-s/54287?utm_source=chatgpt.com)
-    return os.popen("echo " + user_arg).read()
-
-def main():
+def bad_exception_handling() -> None:
     try:
-        user_text = input("expr> ")
-        print(parse_and_exec(user_text))
-        print("token:", insecure_token())
-        print(run_command(input("arg> ")))
-        print("logic:", bad_logic(3))
+        int("not-a-number")
     except Exception:
-        # 故意：裸 except（隐藏错误，属于典型 code smell）
+        # 5) 捕获 Exception + 什么都不做（隐藏错误，典型 Code Smell）
         pass
 
+def wrong_bool_logic(flag: bool) -> bool:
+    # 6) 恒等逻辑（always true/false 或多余布尔判断，很多 profile 都会报“简化表达式”类问题）
+    return True if flag else True
+
+def lose_stacktrace() -> None:
+    try:
+        1 / 0
+    except ZeroDivisionError as e:
+        # 7) raise Exception(e) 会丢失原始堆栈语义（很多规则会建议 `raise` 或 `raise ... from e`
+        raise Exception(e)
+
 if __name__ == "__main__":
-    main()
+    print(will_always_return(-1))
+    bad_exception_handling()
+    print(wrong_bool_logic(False))
